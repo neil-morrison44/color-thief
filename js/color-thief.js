@@ -23,63 +23,44 @@
   with a set of helper functions.
 */
 
+var jpeg = require('jpeg-js');
+var PNG = require('pngjs').PNG;
+
 var iAmOnNode = false;
-var Canvas;
-var Image;
 var fs;
 if ( !!process && process.execPath ) {
     iAmOnNode = true;
 }
 if (iAmOnNode) {
-  Canvas = require('canvas');
-  Image = Canvas.Image;
   fs = require('fs');
 }
 
-var CanvasImage = function (image) {
-    // in node we use strings as path to an image
-    // whereas in the browser we use an image element
-    if (iAmOnNode) {
-      this.canvas = new Canvas()
-      var img = new Image;
-
-      if(image instanceof Buffer) {
-        img.src = image
-      }else{
-        img.src = fs.readFileSync(image);
-      }
-
-    } else {
-      this.canvas = document.createElement('canvas');
-      document.body.appendChild(this.canvas);
-      var img = image;
+var ImageData = function (image) {
+    console.log(image);
+    var imageData = fs.readFileSync(image);
+    if (image.endsWith(".jpg")){
+        var decode = jpeg.decode(imageData);
+        this.width = decode.width;
+        this.height = decode.height;
+        this.data = decode.data;
+    }else if(image.endsWith(".png")){
+        var decode = PNG.sync.read(imageData);
+        this.width = decode.width;
+        this.height = decode.height;
+        this.data = decode.data;
     }
-    
-    this.context = this.canvas.getContext('2d');
-
-    this.width  = this.canvas.width  = img.width;
-    this.height = this.canvas.height = img.height;
-
-    this.context.drawImage(img, 0, 0, this.width, this.height);
 };
 
-CanvasImage.prototype.clear = function () {
-    this.context.clearRect(0, 0, this.width, this.height);
-};
 
-CanvasImage.prototype.update = function (imageData) {
-    this.context.putImageData(imageData, 0, 0);
-};
-
-CanvasImage.prototype.getPixelCount = function () {
+ImageData.prototype.getPixelCount = function () {
     return this.width * this.height;
 };
 
-CanvasImage.prototype.getImageData = function () {
-    return this.context.getImageData(0, 0, this.width, this.height);
+ImageData.prototype.getImageData = function () {
+    return this.data;
 };
 
-CanvasImage.prototype.removeCanvas = function () {
+ImageData.prototype.removeCanvas = function () {
   if (this.canvas.parentNode) {
     this.canvas.parentNode.removeChild(this.canvas);
   }
@@ -141,14 +122,11 @@ ColorThief.prototype.getPalette = function(sourceImage, colorCount, quality, all
     };
 
     // Create custom CanvasImage object
-    var image      = new CanvasImage(sourceImage);
-    var imageData  = image.getImageData();
+    var imageData  = new ImageData(sourceImage);
+    console.log(imageData.getPixelCount);
     var pixels     = imageData.data;
-    var pixelCount = image.getPixelCount();
+    var pixelCount = imageData.getPixelCount();
     var palette    = this.getPaletteFromPixels(pixels, pixelCount, colorCount, quality, allowWhite);
-
-    // Clean up
-    image.removeCanvas();
 
     return palette;
 };
