@@ -36,7 +36,6 @@ if (iAmOnNode) {
 }
 
 var ImageData = function (image) {
-    console.log(image);
     var imageData = fs.readFileSync(image);
     if (image.endsWith(".jpg")){
         var decode = jpeg.decode(imageData);
@@ -123,7 +122,6 @@ ColorThief.prototype.getPalette = function(sourceImage, colorCount, quality, all
 
     // Create custom CanvasImage object
     var imageData  = new ImageData(sourceImage);
-    console.log(imageData.getPixelCount);
     var pixels     = imageData.data;
     var pixelCount = imageData.getPixelCount();
     var palette    = this.getPaletteFromPixels(pixels, pixelCount, colorCount, quality, allowWhite);
